@@ -1,16 +1,23 @@
 {
-    "name": "spatie/data-transfer-object",
+    "name": "knobik/data-transfer-object",
     "description": "Data transfer objects with batteries included",
     "keywords": [
+        "knobik",
         "spatie",
         "data-transfer-object"
     ],
-    "homepage": "https://github.com/spatie/data-transfer-object",
+    "homepage": "https://github.com/knobik/data-transfer-object",
     "license": "MIT",
     "authors": [
         {
             "name": "Brent Roose",
             "email": "brent@spatie.be",
+            "homepage": "https://spatie.be",
+            "role": "Developer"
+        },
+        {
+            "name": "Knobik",
+            "email": "nope@private.com",
             "homepage": "https://spatie.be",
             "role": "Developer"
         }
@@ -24,12 +31,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Spatie\\DataTransferObject\\": "src"
+            "Knobik\\DataTransferObject\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Spatie\\DataTransferObject\\Tests\\": "tests"
+            "Knobik\\DataTransferObject\\Tests\\": "tests"
         }
     },
     "scripts": {
