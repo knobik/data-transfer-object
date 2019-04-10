@@ -2,11 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Spatie\DataTransferObject;
+namespace Knobik\DataTransferObject;
 
 use ReflectionClass;
+use ReflectionException;
 use ReflectionProperty;
 
+/**
+ * Class DataTransferObject
+ * @package Knobik\DataTransferObject
+ */
 abstract class DataTransferObject
 {
     /** @var array */
@@ -16,9 +21,14 @@ abstract class DataTransferObject
     protected $onlyKeys = [];
 
     /**
+     * @var bool
+     */
+    protected $strict = true;
+
+    /**
      * @param array $parameters
      *
-     * @return \Spatie\DataTransferObject\ImmutableDataTransferObject|static
+     * @return ImmutableDataTransferObject|static
      */
     public static function immutable(array $parameters): ImmutableDataTransferObject
     {
@@ -27,15 +37,24 @@ abstract class DataTransferObject
 
     public function __construct(array $parameters)
     {
+        $this->fill($parameters);
+    }
+
+    /**
+     * @param array $parameters
+     * @throws ReflectionException
+     */
+    public function fill(array $parameters)
+    {
         $class = new ReflectionClass(static::class);
 
         $properties = $this->getPublicProperties($class);
 
         foreach ($properties as $property) {
             if (
-                ! isset($parameters[$property->getName()])
-                && ! $property->isDefault()
-                && ! $property->isNullable()
+                !isset($parameters[$property->getName()])
+                && !$property->isDefault()
+                && !$property->isNullable()
             ) {
                 throw DataTransferObjectError::uninitialized($property);
             }
@@ -47,11 +66,15 @@ abstract class DataTransferObject
             unset($parameters[$property->getName()]);
         }
 
-        if (count($parameters)) {
+        if ($this->strict && count($parameters)) {
             throw DataTransferObjectError::unknownProperties(array_keys($parameters), $class->getName());
         }
     }
 
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
     public function all(): array
     {
         $data = [];
@@ -95,6 +118,10 @@ abstract class DataTransferObject
         return $valueObject;
     }
 
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
     public function toArray(): array
     {
         if (count($this->onlyKeys)) {
@@ -108,6 +135,11 @@ abstract class DataTransferObject
         return $array;
     }
 
+    /**
+     * @param array $array
+     * @return array
+     * @throws ReflectionException
+     */
     protected function parseArray(array $array): array
     {
         foreach ($array as $key => $value) {
@@ -120,7 +152,7 @@ abstract class DataTransferObject
                 continue;
             }
 
-            if (! is_array($value)) {
+            if (!is_array($value)) {
                 continue;
             }
 
@@ -131,9 +163,9 @@ abstract class DataTransferObject
     }
 
     /**
-     * @param \ReflectionClass $class
+     * @param ReflectionClass $class
      *
-     * @return array|\Spatie\DataTransferObject\Property[]
+     * @return array|Property[]
      */
     protected function getPublicProperties(ReflectionClass $class): array
     {

@@ -2,10 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Spatie\DataTransferObject;
+namespace Knobik\DataTransferObject;
 
+use ReflectionException;
 use ReflectionProperty;
 
+/**
+ * Class Property
+ * @package Knobik\DataTransferObject
+ */
 class Property extends ReflectionProperty
 {
     /** @var array */
@@ -15,7 +20,7 @@ class Property extends ReflectionProperty
         'float' => 'double',
     ];
 
-    /** @var \Spatie\DataTransferObject\DataTransferObject */
+    /** @var DataTransferObject */
     protected $valueObject;
 
     /** @var bool */
@@ -33,11 +38,23 @@ class Property extends ReflectionProperty
     /** @var array */
     protected $arrayTypes = [];
 
-    public static function fromReflection(DataTransferObject $valueObject, ReflectionProperty $reflectionProperty)
+    /**
+     * @param DataTransferObject $valueObject
+     * @param ReflectionProperty $reflectionProperty
+     * @return Property
+     * @throws ReflectionException
+     */
+    public static function fromReflection(DataTransferObject $valueObject, ReflectionProperty $reflectionProperty): Property
     {
         return new self($valueObject, $reflectionProperty);
     }
 
+    /**
+     * Property constructor.
+     * @param DataTransferObject $valueObject
+     * @param ReflectionProperty $reflectionProperty
+     * @throws ReflectionException
+     */
     public function __construct(DataTransferObject $valueObject, ReflectionProperty $reflectionProperty)
     {
         parent::__construct($reflectionProperty->class, $reflectionProperty->getName());
@@ -47,13 +64,16 @@ class Property extends ReflectionProperty
         $this->resolveTypeDefinition();
     }
 
-    public function set($value)
+    /**
+     * @param $value
+     */
+    public function set($value): void
     {
         if (is_array($value)) {
             $value = $this->shouldBeCastToCollection($value) ? $this->castCollection($value) : $this->cast($value);
         }
 
-        if (! $this->isValidType($value)) {
+        if (!$this->isValidType($value)) {
             throw DataTransferObjectError::invalidType($this, $value);
         }
 
@@ -62,26 +82,38 @@ class Property extends ReflectionProperty
         $this->valueObject->{$this->getName()} = $value;
     }
 
+    /**
+     * @return array
+     */
     public function getTypes(): array
     {
         return $this->types;
     }
 
+    /**
+     * @return string
+     */
     public function getFqn(): string
     {
         return "{$this->getDeclaringClass()->getName()}::{$this->getName()}";
     }
 
+    /**
+     * @return bool
+     */
     public function isNullable(): bool
     {
         return $this->isNullable;
     }
 
-    protected function resolveTypeDefinition()
+    /**
+     *
+     */
+    protected function resolveTypeDefinition(): void
     {
         $docComment = $this->getDocComment();
 
-        if (! $docComment) {
+        if (!$docComment) {
             $this->isNullable = true;
 
             return;
@@ -89,7 +121,7 @@ class Property extends ReflectionProperty
 
         preg_match('/\@var ((?:(?:[\w|\\\\])+(?:\[\])?)+)/', $docComment, $matches);
 
-        if (! count($matches)) {
+        if (!count($matches)) {
             $this->isNullable = true;
 
             return;
@@ -105,9 +137,13 @@ class Property extends ReflectionProperty
         $this->isNullable = strpos($varDocComment, 'null') !== false;
     }
 
+    /**
+     * @param $value
+     * @return bool
+     */
     protected function isValidType($value): bool
     {
-        if (! $this->hasTypeDeclaration) {
+        if (!$this->hasTypeDeclaration) {
             return true;
         }
 
@@ -126,12 +162,16 @@ class Property extends ReflectionProperty
         return false;
     }
 
+    /**
+     * @param $value
+     * @return mixed
+     */
     protected function cast($value)
     {
         $castTo = null;
 
         foreach ($this->types as $type) {
-            if (! is_subclass_of($type, DataTransferObject::class)) {
+            if (!is_subclass_of($type, DataTransferObject::class)) {
                 continue;
             }
 
@@ -140,19 +180,23 @@ class Property extends ReflectionProperty
             break;
         }
 
-        if (! $castTo) {
+        if (!$castTo) {
             return $value;
         }
 
         return new $castTo($value);
     }
 
-    protected function castCollection(array $values)
+    /**
+     * @param array $values
+     * @return array
+     */
+    protected function castCollection(array $values): array
     {
         $castTo = null;
 
         foreach ($this->arrayTypes as $type) {
-            if (! is_subclass_of($type, DataTransferObject::class)) {
+            if (!is_subclass_of($type, DataTransferObject::class)) {
                 continue;
             }
 
@@ -161,7 +205,7 @@ class Property extends ReflectionProperty
             break;
         }
 
-        if (! $castTo) {
+        if (!$castTo) {
             return $values;
         }
 
@@ -174,6 +218,10 @@ class Property extends ReflectionProperty
         return $casts;
     }
 
+    /**
+     * @param array $values
+     * @return bool
+     */
     protected function shouldBeCastToCollection(array $values): bool
     {
         if (empty($values)) {
@@ -185,7 +233,7 @@ class Property extends ReflectionProperty
                 return false;
             }
 
-            if (! is_array($value)) {
+            if (!is_array($value)) {
                 return false;
             }
         }
@@ -193,6 +241,11 @@ class Property extends ReflectionProperty
         return true;
     }
 
+    /**
+     * @param string $type
+     * @param $value
+     * @return bool
+     */
     protected function assertTypeEquals(string $type, $value): bool
     {
         if (strpos($type, '[]') !== false) {
@@ -207,16 +260,21 @@ class Property extends ReflectionProperty
             || gettype($value) === (self::$typeMapping[$type] ?? $type);
     }
 
+    /**
+     * @param string $type
+     * @param $collection
+     * @return bool
+     */
     protected function isValidGenericCollection(string $type, $collection): bool
     {
-        if (! is_array($collection)) {
+        if (!is_array($collection)) {
             return false;
         }
 
         $valueType = str_replace('[]', '', $type);
 
         foreach ($collection as $value) {
-            if (! $this->assertTypeEquals($valueType, $value)) {
+            if (!$this->assertTypeEquals($valueType, $value)) {
                 return false;
             }
         }

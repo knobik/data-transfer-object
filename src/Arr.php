@@ -2,22 +2,41 @@
 
 declare(strict_types=1);
 
-namespace Spatie\DataTransferObject;
+namespace Knobik\DataTransferObject;
 
 use ArrayAccess;
 
+/**
+ * Class Arr
+ * @package Knobik\DataTransferObject
+ */
 class Arr
 {
+    /**
+     * @param $array
+     * @param $keys
+     * @return array
+     */
     public static function only($array, $keys): array
     {
         return array_intersect_key($array, array_flip((array) $keys));
     }
 
+    /**
+     * @param $array
+     * @param $keys
+     * @return array
+     */
     public static function except($array, $keys): array
     {
         return static::forget($array, $keys);
     }
 
+    /**
+     * @param $array
+     * @param $keys
+     * @return array
+     */
     public static function forget($array, $keys): array
     {
         $keys = (array) $keys;
@@ -52,6 +71,11 @@ class Arr
         return $array;
     }
 
+    /**
+     * @param $array
+     * @param $key
+     * @return bool
+     */
     public static function exists($array, $key): bool
     {
         if ($array instanceof ArrayAccess) {
